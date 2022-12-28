@@ -4,9 +4,9 @@ import threading
 import time
 import serial
 import serial.tools
+from serial.tools.list_ports import comports
 
-import util
-
+from util import *
 # globals
 app = None
 should_exit = False
@@ -34,7 +34,14 @@ def on_user_command(command):
     # parse local commands first
     command, *args = command.split(" ")
     if command == "help":
-        app.console_log("Commands: ping, exit")
+        app.console_log("SERIAL commands")
+        app.console_log(" open <port> <baudrate>", "hint")
+        app.console_log(" close", "hint")
+        app.console_log(" listport", "hint")
+        
+        app.console_log("CLIENT commands")
+        app.console_log(" exit", "hint")
+
         return
     elif command == "exit":
         if ser and ser.is_open:
@@ -85,8 +92,13 @@ def on_user_command(command):
         else:
             app.console_log(f"Failed to open serial port: {port}","error")
             return
-    elif command == "listport":
-        pass
+    elif command in ["listport", "list", "ports"]:
+        ports = comports()
+        for port in ports:
+            app.console_log(port.device)
+        else:
+            app.console_log("No ports found","warning")
+        return
     elif command == "cls":
         app.clear_console()
     else:
@@ -110,7 +122,7 @@ def send_arduino_command(command):
     ser.write_timeout = 1
     try:
         ser.write(b)
-    except util.SerialTimeoutException:
+    except serial.SerialTimeoutException:
         app.console_log("Write Timeout","error")
     return
 
