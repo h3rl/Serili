@@ -1,11 +1,4 @@
 import serial
-import serial.threaded
-import serial.tools
-
-# # thread imports
-# from serial.threaded import LineReader, ReaderThread
-
-# comport import
 from serial.tools.list_ports import comports
 
 class SerialLib():
