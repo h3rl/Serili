@@ -1,4 +1,3 @@
-from collections import defaultdict
 import tkinter as tk
 from typing import Callable
 
@@ -8,7 +7,7 @@ class Config():
         self.console_history_size = 100
         self._line_endings = ["NONE", "CR", "LF", "CRLF"]
         self.line_ending = "CRLF"
-        self.err_log = []
+        self._err_log = []
 
     def on_error(self, error_callback):
         self.error_callback = error_callback
@@ -31,7 +30,7 @@ class Config():
 
     def validate_config_keyval(self, key, value):
         # check that given kets have a valid value
-        print(value)
+        #print(value)
         if key == "console_history_size":
             if type(value) != int:
                 return False
@@ -72,7 +71,7 @@ class Config():
                 
                 # check that key is valid
                 if not self.validate_config_keyval(key, value):
-                    self.err_log += f"Skipping invalid setting: {key}={value}"
+                    self._err_log.append(f"Skipping invalid setting: {key}={value}")
 
                 self.__dict__[key] = value
         except ValueError:
@@ -129,9 +128,9 @@ class ConsoleWindow(tk.Tk):
         self.input_frame.pack(side="bottom", fill="x")
 
         # add config error commands to console
-        for error in self.VARS.err_log:
-            self.console_log(error,"warning")
-
+        if len(self.VARS._err_log) > 0:
+            for error in self.VARS._err_log:
+                self.console_log(error,"warning")
     def handle_history(self, event):
         # if no input reset history index
         if len(self.console_input.get()) <= 0:
@@ -152,25 +151,12 @@ class ConsoleWindow(tk.Tk):
         input_text = self.console_input.get()
         # clear input
         self.console_input.delete(0, "end")
-        self.console_log(f"> {input_text}\n")
+        self.console_log(f"> {input_text}")
         self.console_output.config(state="disabled")
-
-        # get line ending
-        ending_setting = self.VARS.lineending.get()
-        ending = ""
-        if ending_setting == "CR":
-            ending = "\r"
-        elif ending_setting == "LF":
-            ending = "\n"
-        elif ending_setting == "CRLF":
-            ending = "\r\n"
 
         # call command callback
         if self.command_callback:
-            if self.command_callback_ending:
-                self.command_callback(input_text+ending)
-            else:
-                self.command_callback(input_text)
+            self.command_callback(input_text)
         
         # add unique to history
         if len(self.command_history) > 0 and self.command_history[0] == input_text:
@@ -180,6 +166,17 @@ class ConsoleWindow(tk.Tk):
         if len(self.command_history) > self.VARS.console_history_size:
             self.command_history.pop(0)
 
+    def get_line_ending(self):
+        ending_setting = self.VARS.lineending.get()
+        ending = ""
+        if ending_setting == "CR":
+            ending = "\r"
+        elif ending_setting == "LF":
+            ending = "\n"
+        elif ending_setting == "CRLF":
+            ending = "\r\n"
+        return ending
+
     def console_log(self, text, type="normal"):
         colors = {
             "normal": "black",
@@ -187,6 +184,8 @@ class ConsoleWindow(tk.Tk):
             "warning": "orange",
             "success": "green"
         }
+        #text = text.replace("\r", "¶").replace("\n", "¶¶").replace("\t", "→")
+        text = text.strip() + "\n"
 
         # enable editing
         self.console_output.config(state="normal")
@@ -202,6 +201,5 @@ class ConsoleWindow(tk.Tk):
         # disable editing
         self.console_output.config(state="disabled")
 
-    def on_command(self, command_callback: Callable[[str], None],ending=True):
+    def on_command(self, command_callback: Callable[[str], None]):
         self.command_callback = command_callback
-        self.command_callback_ending = ending
