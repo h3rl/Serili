@@ -103,8 +103,8 @@ class ConsoleWindow(tk.Tk):
         self.console_output.config(state="disabled", cursor="arrow")
         
         # Pack the elements
-        self.console_output.pack(side="left", fill="both", expand=True)
         self.scrollbar.pack(side="right", fill="y")
+        self.console_output.pack(side="left", fill="both", expand=True)
         
         self.output_frame.pack(side="top", fill="both", expand=True)
 
@@ -177,12 +177,18 @@ class ConsoleWindow(tk.Tk):
             ending = "\r\n"
         return ending
 
+    def clear_console(self):
+        self.console_output.config(state="normal")
+        self.console_output.delete("1.0", "end")
+        self.console_output.config(state="disabled")
+
     def console_log(self, text, type="normal"):
         colors = {
             "normal": "black",
             "error": "red",
             "warning": "orange",
-            "success": "green"
+            "success": "green",
+            "hint" : "gray",
         }
         #text = text.replace("\r", "¶").replace("\n", "¶¶").replace("\t", "→")
         text = text.strip() + "\n"
